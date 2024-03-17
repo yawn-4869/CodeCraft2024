@@ -22,7 +22,7 @@ namespace io {
         model::berths.resize(ConstVariable::berth_num);
         for(int i = 0; i < ConstVariable::berth_num; ++i) {
             Berth berth;
-            io_in >> berth.id >> berth.location.x >> berth.location.y >> berth.transport_time >> berth.loading_speed;
+            io_in >> berth.id >> berth.top_left.x >> berth.top_left.y >> berth.transport_time >> berth.loading_speed;
             model::berths[berth.id] = berth;
         }
 

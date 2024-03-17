@@ -12,6 +12,7 @@
 #include "model.h"
 #include "const_variable.h"
 #include "args.h"
+#include "log.h"
 
 namespace AlgorithmTools {
 
@@ -54,7 +55,7 @@ int minPathSum(const std::vector<std::string>& map, Point& start, Point& end, st
             int ny = curr.y + dy[i];
 
             if (nx >= 1 && nx <= ConstVariable::map_row_num && ny >= 1 && ny <= ConstVariable::map_col_num) {
-                if(map[nx][ny] == '#') {
+                if(map[nx][ny] == '#' || map[nx][ny] == '*') {
                     continue;
                 }
                 int newDist = curr_dist + 1;
@@ -93,19 +94,21 @@ int findMinPath(const std::vector<std::string>& map, Point& start, Point& end, s
         Point current = frontier.top().second;
         frontier.pop();
 
-        //if(_USE_LOG_) {
+        // if(_USE_LOG_) {
         //    std::cerr << "[info] in A* algorithm (" << start.x << "," << start.y << ")" << "to (" << end.x << "," << end.y << ")"
         //    << "next step: (" << current.x << "," << current.y << ")" << std::endl;
-        //}
+        // }
 
         if (current == end) {
+        //     // 因为泊位是一个区域，给定的终点可能是最先到达的也可能是先到了泊位区域内的其他点
+        //     // 只要进入泊位区域就是成功
             break;
         }
 
         for (int i = 0; i < 4; ++i) {
             int nx = current.x + dx[i];
             int ny = current.y + dy[i];
-            if (nx < 0 || nx >= map.size() || ny < 0 && ny >= map[0].size() || map[nx][ny] == '#') {
+            if (nx < 0 || nx >= map.size() || ny < 0 && ny >= map[0].size() || map[nx][ny] == '#' || map[nx][ny] == '*') {
                 // 越界或者是障碍
                 continue;
             }
@@ -121,9 +124,18 @@ int findMinPath(const std::vector<std::string>& map, Point& start, Point& end, s
     }
 
     Point p = end;
-    path.push_back(end);
+    Point tmp = p;
+
+    while(map[p.x][p.y] == 'B') {
+        tmp = p;
+        p = came_from[tmp];
+    }
+
+    path.push_back(tmp);
     while (true) {
-        p = came_from[path.back()];
+        p = came_from[tmp];
+        tmp = p;
+        
         if (p == start) {
             break;
         }
@@ -131,6 +143,7 @@ int findMinPath(const std::vector<std::string>& map, Point& start, Point& end, s
     }
 
     std::reverse(path.begin(), path.end());
+    // path.push_back(tmp);
 
     return cost_so_far[end];
 }

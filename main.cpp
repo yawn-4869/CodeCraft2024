@@ -12,7 +12,7 @@ void Init()
 {
     // 初始化地图
     int cnt = 0; // 记录机器人id
-    for(int i = 1; i <= ConstVariable::map_row_num; ++i) {
+    for(int i = 0; i < ConstVariable::map_row_num; ++i) {
         char tmp[ConstVariable::map_col_num + 2];
         scanf("%s", tmp);
         model::current_map.init_map[i] = std::string(tmp);
@@ -36,9 +36,24 @@ void Init()
     
     // 初始化泊位数组
     model::berths.resize(ConstVariable::berth_num);
+    std::vector<int> dx = { -1, 1, 0, 0 };
+    std::vector<int> dy = { 0, 0, -1, 1 };
     for(int i = 0; i < ConstVariable::berth_num; ++i) {
         Berth berth;
-        scanf("%d%d%d%d%d", &berth.id, &berth.location.x, &berth.location.y, &berth.transport_time, &berth.loading_speed);
+        scanf("%d%d%d%d%d", &berth.id, &berth.top_left.x, &berth.top_left.y, &berth.transport_time, &berth.loading_speed);
+        model::berths[i].in_sea = 0;
+        berth.bottom_right = Point(berth.top_left.x + 3, berth.top_left.y + 3);
+        for(int i = 0; i < 4; ++i) {
+            int nx = berth.top_left.y + dx[i];
+            int ny = berth.top_left.y + dy[i];
+            if(nx < 0 || nx >= ConstVariable::map_row_num || ny < 0 || ny >= ConstVariable::map_col_num) {
+                continue;
+            }
+
+            if(model::current_map.init_map[nx][ny] == '*') {
+                model::berths[i].in_sea = 1;
+            }
+        }
         model::berths[i] = berth;
     }
 
@@ -81,7 +96,7 @@ int Input()
         if(ite->second.rest_frame == 0) {
             ite = model::goods.erase(ite);
         } else {
-            ite++;
+            break;
         }
     }
 
@@ -98,7 +113,6 @@ int Input()
             scanf("%d%d%d%d\n", &model::robots[i].have_goods, &model::robots[i].location.x, 
             &model::robots[i].location.y, &model::robots[i].status);
         } else {
-            int have_goods, x, y, sts;
             Robot robot;
             scanf("%d%d%d%d\n", &robot.have_goods, &robot.location.x, &robot.location.y, &robot.status);
             robot.id = i;
@@ -144,16 +158,18 @@ int main() {
         Log("test1");
         for(int i = 0; i < ConstVariable::robot_num; ++i) {
             if(!model::robots[i].have_goods) {
+                // Log("generate goods pq");
                 if(model::robots[i].goods_id == -1) {
                     // 没有货物且也没有标记, 给机器人分配货物
                     for(auto ite = model::goods.begin(); ite != model::goods.end(); ite++) {
                         if(ite->second.robot_id != -1) {
                             continue;
                         }
-
+                        // Log("A* start");
                         std::list<Point> path;
                         int need_frame = AlgorithmTools::findMinPath(model::current_map.init_map, model::robots[i].location, 
                         ite->second.location, path);
+                        // Log("A* end: " + std::to_string(need_frame));
 
                         if(need_frame == 0) {
                             continue;
@@ -166,12 +182,17 @@ int main() {
                     }
                 }
             } else {
+                Log("generate berths pq");
                 if(model::robots[i].target_berth == -1) {
                     // 已有货物但是没有目标泊位, 给机器人分配泊位
                     for(int j = 0; j < model::berths.size(); ++j) {
                         std::list<Point> path;
+                        Point end = model::berths[j].top_left;
+                        if(model::berths[j].in_sea) {
+                            end = model::berths[j].bottom_right;
+                        }
                         int need_frame = AlgorithmTools::findMinPath(model::current_map.init_map, model::robots[i].location, 
-                        model::berths[j].location, path);
+                        end, path);
 
                         if(need_frame == 0) {
                             continue;
@@ -187,6 +208,9 @@ int main() {
                     }
                     // 机器人标记泊位, 已经有机器人去的泊位还是可以分配机器人去
                     // 所以不需要像货物一样进行二次筛选
+                    if(model::robots[i].berth_pq.empty()) {
+                        continue;
+                    }
                     int target_berth = model::robots[i].berth_pq.top().second;
                     model::robots[i].target_berth = target_berth;
                 }
@@ -278,10 +302,13 @@ int main() {
 
                         printf("move %d %d\n", model::robots[i].id, move_id);
                         
-                        Log("[info] [current point]: (" + std::to_string(model::robots[i].location.x) + "," + std::to_string(model::robots[i].location.y)
-                        + ") [next point]: (" + std::to_string(p.x) + "," + std::to_string(p.y) + ") robot [" + 
-                        std::to_string(model::robots[i].id) + "] move to: " + std::to_string(move_id) + "robot status: " + 
-                        std::to_string(model::robots[i].status));
+                        if (_USE_LOG_) {
+                            Log("[info] [current point]: (" + std::to_string(model::robots[i].location.x) + "," + std::to_string(model::robots[i].location.y)
+                            + ") " + model::current_map.init_map[model::robots[i].location.x][model::robots[i].location.y] + 
+                            " [next point]: (" + std::to_string(p.x) + "," + std::to_string(p.y) + ") " + model::current_map.init_map[p.x][p.y] +
+                            " robot [" + std::to_string(model::robots[i].id) + "] move to: " + std::to_string(move_id) + "robot status: " + 
+                            std::to_string(model::robots[i].status));
+                        }
 
                         model::robots[i].robot_2_goods[goods_id].pop_front();
                     }
@@ -289,17 +316,20 @@ int main() {
                     // 没有货物分配, 随机移动
                     printf("move %d %d\n", model::robots[i].id, rand() % 4);
                 }
-            }
-
-            if(model::robots[i].have_goods) {
+            } else {
                 if (model::robots[i].target_berth != -1) {
                     // 前往泊位
                     int berth_id = model::robots[i].target_berth;
+                    int goods_id = model::robots[i].goods_id;
                     if (model::robots[i].robot_2_berth[berth_id].empty()) {
                         printf("pull %d\n", model::robots[i].id);
                         // 重置状态
                         model::robots[i].have_goods = 0;
                         model::robots[i].target_berth = -1;
+
+                        // 泊位状态更新
+                        model::berths[berth_id].goods_num++;
+                        model::berths[berth_id].goods_value += model::goods[goods_id].price;
 
                         if(_USE_LOG_) {
                             Log("[info] robot [" + std::to_string(model::robots[i].id) + "] pull goods to berth [" 
@@ -327,8 +357,9 @@ int main() {
                         printf("move %d %d\n", model::robots[i].id, move_id);
                         if (_USE_LOG_) {
                             Log("[info] [current point]: (" + std::to_string(model::robots[i].location.x) + "," + std::to_string(model::robots[i].location.y)
-                            + ") [next point]: (" + std::to_string(p.x) + "," + std::to_string(p.y) + ") robot [" + 
-                            std::to_string(model::robots[i].id) + "] move to: " + std::to_string(move_id) + "robot status: " + 
+                            + ") " + model::current_map.init_map[model::robots[i].location.x][model::robots[i].location.y] + 
+                            " [next point]: (" + std::to_string(p.x) + "," + std::to_string(p.y) + ") " + model::current_map.init_map[p.x][p.y] +
+                            " robot [" + std::to_string(model::robots[i].id) + "] move to: " + std::to_string(move_id) + "robot status: " + 
                             std::to_string(model::robots[i].status));
                         }
                         model::robots[i].robot_2_berth[berth_id].pop_front();
@@ -348,15 +379,23 @@ int main() {
             if(berth_id == -1) {
                 // 在虚拟点位, 要回到泊位
                 // 泊位选取
-                std::priority_queue<std::pair<double, int>> boat_2_berth_pq;
-                for(int j = 0; j < model::berths.size(); ++j) {
-                    int loading_goods = std::min(model::berths[j].goods_num, model::boats[i].capacity);
-                    double berth_priority_value = model::berths[j].goods_value * 1.0 / 
-                                                (model::berths[j].transport_time + model::berths[j].goods_num / model::berths[j].loading_speed);
-                    boat_2_berth_pq.push(std::make_pair(berth_priority_value, model::berths[j].id));
-                }
-                model::boats[i].berth_id = boat_2_berth_pq.top().second;
-                printf("ship %d %d\n", model::boats[i].id, model::boats[i].berth_id);
+                // std::priority_queue<std::pair<double, int>> boat_2_berth_pq;
+                // for(int j = 0; j < model::berths.size(); ++j) {
+                //     int loading_goods = std::min(model::berths[j].goods_num, model::boats[i].capacity);
+                //     double berth_priority_value = model::berths[j].goods_value * 1.0 / 
+                //                                 (model::berths[j].transport_time + model::berths[j].goods_num / model::berths[j].loading_speed);
+                //     boat_2_berth_pq.push(std::make_pair(berth_priority_value, model::berths[j].id));
+                // }
+                // model::boats[i].berth_id = boat_2_berth_pq.top().second;
+                // printf("ship %d %d\n", model::boats[i].id, model::boats[i].berth_id);
+                // if (_USE_LOG_) {
+                //     Log("[info] boats [" + std::to_string(model::boats[i].id) + "ship to berth [" + std::to_string(model::boats[i].berth_id)
+                //     + "] need frame: " + std::to_string(model::berths[model::boats[i].berth_id].transport_time));
+                // }
+
+                // 简单逻辑：每艘船负责两个泊位, 定时去泊位一次
+                int berth_range = model::boats[i].id * 2;
+
             } else {
                 // 在泊位, 决定是否需要运输货物
                 // TODO: 目前算法, 满了才运输
@@ -368,10 +407,19 @@ int main() {
                 //     // 计算剩下的
                 // }
 
-                if(model::berths[berth_id].goods_num >= model::boats[i].capacity) {
+                if(model::berths[berth_id].goods_num > 0) {
+                    // 有了就卖
                     printf("go %d\n", model::boats[i].id);
                 }
 
+                // 泊位状态更新
+                model::berths[berth_id].goods_num--;
+//                model::berths[berth_id].goods_value += model::goods[goods_id].price;
+
+                if (_USE_LOG_) {
+                    Log("[info] boats [" + std::to_string(model::boats[i].id) + "go to berth [" + std::to_string(model::boats[i].berth_id)
+                    + "] need frame: " + std::to_string(model::berths[model::boats[i].berth_id].transport_time));
+                }
             }
         }
 

@@ -5,7 +5,6 @@
 #include <string>
 #include <string.h>
 #include <map>
-#include <unordered_map>
 #include <list>
 #include <queue>
 
@@ -55,14 +54,16 @@ typedef struct Goods {
 /*泊位*/
 typedef struct Berth {
     int id; // 数组中的下标
-    Point location{0, 0}; // 坐标, 泊位为4*4的矩形, 存储左上角坐标
+    Point top_left{0, 0}; // 坐标, 泊位为4*4的矩形, 存储左上角坐标
+    Point bottom_right{0, 0}; // 坐标, 泊位为4*4的矩形, 存储右下角坐标
+    int in_sea; // 判定左上角是否在海里 0 -- false 1 -- true
     int transport_time; // 泊位轮船运输到虚拟点的时间, 即产生价值的时间
     int loading_speed; // 装载速度，即每帧可以装载的物品数
     int goods_num; // 已存放的货物数量
     int goods_value; // 已存放的货物价值
     Berth() {}
     Berth(int pos_x, int pos_y, int time, int velocity) 
-        : location(pos_x, pos_y), transport_time(time), loading_speed(velocity), goods_num(0), goods_value(0) {}
+        : top_left(pos_x, pos_y), transport_time(time), loading_speed(velocity), goods_num(0), goods_value(0) {}
 } Berth;
 
 /*轮船*/
@@ -112,7 +113,7 @@ namespace model {
     std::vector<Robot> robots;
     //std::unordered_map<Point, int> robot_index;
     // std::vector<Goods> goods;
-    std::unordered_map<int, Goods> goods;
+    std::map<int, Goods> goods;
     std::vector<Berth> berths;
     std::vector<Boat> boats;
     Map current_map = Map();
