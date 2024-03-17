@@ -72,6 +72,7 @@ typedef struct Boat {
     int status; // 状态 0 -- 移动中 1 -- 运行(装货/运输完成) 2 -- 泊位等待
     int berth_id; // 目标泊位
     int capacity; // 船容量
+    int is_first{ 0 }; // 访问第一个泊位还是第二个
     Boat() {}
     Boat(int _status, int bid) : status(_status), berth_id(bid) {}
 } Boat;

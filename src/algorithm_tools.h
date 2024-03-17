@@ -100,8 +100,6 @@ int findMinPath(const std::vector<std::string>& map, Point& start, Point& end, s
         // }
 
         if (current == end) {
-        //     // 因为泊位是一个区域，给定的终点可能是最先到达的也可能是先到了泊位区域内的其他点
-        //     // 只要进入泊位区域就是成功
             break;
         }
 
@@ -123,9 +121,10 @@ int findMinPath(const std::vector<std::string>& map, Point& start, Point& end, s
         }
     }
 
+    // 因为泊位是一个区域，给定的终点可能是最先到达的也可能是先到了泊位区域内的其他点
+    // 因此将路径中多余的'B'点去除
     Point p = end;
     Point tmp = p;
-
     while(map[p.x][p.y] == 'B') {
         tmp = p;
         p = came_from[tmp];
@@ -144,6 +143,13 @@ int findMinPath(const std::vector<std::string>& map, Point& start, Point& end, s
 
     std::reverse(path.begin(), path.end());
     // path.push_back(tmp);
+
+    // 对路径的开始5个格子加锁
+    // int k = 0;
+    // for(auto ite = path.begin(); ite != path.end() && k < 5; ite++) {
+    //     model::current_map.init_map[ite->x][ite->y] = '#';
+    //     k++;
+    // }
 
     return cost_so_far[end];
 }
