@@ -94,11 +94,6 @@ int findMinPath(const std::vector<std::string>& map, Point& start, Point& end, s
         Point current = frontier.top().second;
         frontier.pop();
 
-        // if(_USE_LOG_) {
-        //    std::cerr << "[info] in A* algorithm (" << start.x << "," << start.y << ")" << "to (" << end.x << "," << end.y << ")"
-        //    << "next step: (" << current.x << "," << current.y << ")" << std::endl;
-        // }
-
         if (current == end) {
             break;
         }
@@ -144,13 +139,6 @@ int findMinPath(const std::vector<std::string>& map, Point& start, Point& end, s
     std::reverse(path.begin(), path.end());
     // path.push_back(tmp);
 
-    // 对路径的开始5个格子加锁
-    // int k = 0;
-    // for(auto ite = path.begin(); ite != path.end() && k < 5; ite++) {
-    //     model::current_map.init_map[ite->x][ite->y] = '#';
-    //     k++;
-    // }
-
     return cost_so_far[end];
 }
 
@@ -161,12 +149,12 @@ double get_goods_priority_value(int need_frame, Goods& target_goods) {
     return target_goods.price * 1.0 / need_frame;
 }
 
-double get_berth_priority_value(int price, int need_frame, Berth& target_berth, int rest_frame) {
+double get_berth_priority_value(int need_frame, Berth& target_berth, int rest_frame) {
     if(need_frame + target_berth.transport_time > rest_frame) {
         return 0.0;
     }
     int total_frame = need_frame + target_berth.transport_time;
-    return (target_berth.goods_value + price) * 1.0 / (((target_berth.goods_num + 1) / target_berth.loading_speed) * total_frame * 1.0);
+    return target_berth.loading_speed * 1.0 / total_frame;
 }
 
 }

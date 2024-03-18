@@ -4,7 +4,7 @@
 namespace ConstVariable {
 const static int map_row_num = 200; // 地图行数
 const static int map_col_num = 200; // 地图列数
-const static int total_frame = 1500; // 总帧数
+const static int total_frame = 15000; // 总帧数
 const static int robot_num = 10; // 机器人数
 const static int berth_num = 10; // 泊位数
 const static int boat_num = 5; // 船数

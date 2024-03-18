@@ -61,6 +61,8 @@ typedef struct Berth {
     int loading_speed; // 装载速度，即每帧可以装载的物品数
     int goods_num; // 已存放的货物数量
     int goods_value; // 已存放的货物价值
+    int robot_id; // 要去港口的机器人id
+    int boat_id; // 要去港口的船的id
     Berth() {}
     Berth(int pos_x, int pos_y, int time, int velocity) 
         : top_left(pos_x, pos_y), transport_time(time), loading_speed(velocity), goods_num(0), goods_value(0) {}
@@ -73,6 +75,7 @@ typedef struct Boat {
     int berth_id; // 目标泊位
     int capacity; // 船容量
     int is_first{ 0 }; // 访问第一个泊位还是第二个
+    int loading_time{ -1 };
     Boat() {}
     Boat(int _status, int bid) : status(_status), berth_id(bid) {}
 } Boat;
@@ -96,6 +99,7 @@ public:
 public:
     int id; // 数组中的下标
     Point location{0, 0}; // 坐标
+    Point next_location{0, 0}; // 上一次的坐标，便于恢复
     int have_goods; // 是否有货物
     int status; // 状态 0 -- 恢复 1 -- 运行
     int target_berth; // 目标泊位
