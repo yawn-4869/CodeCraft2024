@@ -14,7 +14,7 @@ const static int move_to_berth = 500; // 移动到其他泊位的帧数
 }
 
 namespace ConstSetting {
-const static int blocked_gird_num = 5; // 设定的锁定的路径格子数
+const static int blocked_gird_num = 3; // 设定的锁定的路径格子数
 }
 
 #endif

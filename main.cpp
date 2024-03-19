@@ -387,9 +387,9 @@ int main() {
 
         
         // 轮船操作指令
-        for(int i = 0; i < ConstVariable::berth_num; ++i) {
-            Log("berth [" + std::to_string(model::berths[i].id) + "] goods num: " + std::to_string(model::berths[i].goods_num));
-        }
+        // for(int i = 0; i < ConstVariable::berth_num; ++i) {
+        //     Log("berth [" + std::to_string(model::berths[i].id) + "] goods num: " + std::to_string(model::berths[i].goods_num));
+        // }
         for(int i = 0; i < model::boats.size(); ++i) {
             int berth_id = model::boats[i].berth_id;
             if(berth_id == -1) {

@@ -150,11 +150,13 @@ double get_goods_priority_value(int need_frame, Goods& target_goods) {
 }
 
 double get_berth_priority_value(int need_frame, Berth& target_berth, int rest_frame) {
+    // 优先级：货物数量+装货速度
+    // 尽可能将货物集中到几个港口
     if(need_frame + target_berth.transport_time > rest_frame) {
         return 0.0;
     }
     int total_frame = need_frame + target_berth.transport_time;
-    return target_berth.loading_speed * 1.0 / total_frame;
+    return (target_berth.goods_num + target_berth.loading_speed * 1.0) / total_frame;
 }
 
 }

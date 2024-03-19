@@ -57,10 +57,6 @@ namespace io {
         model::current_map.current_frame = frame;
         model::current_map.current_money = money;
 
-        if (_USE_LOG_) {
-            Log("[info] read frame success, current frame: " + std::to_string(frame) + " money: " + std::to_string(money));
-        }
-
         // 货物信息
         int goods_num;
         io_in >> goods_num;
@@ -82,10 +78,6 @@ namespace io {
             } else {
                 break;
             }
-        }
-
-        if (_USE_LOG_) {
-            Log("[info] read goods success, goods_num" + std::to_string(goods_num));
         }
 
         // 机器人信息
@@ -115,6 +107,11 @@ namespace io {
                 tmp.capacity = model::current_map.boat_capacity;
                 model::boats[i] = tmp;
             }
+        }
+ 
+        if (_USE_LOG_) {
+            Log("[info] read goods success, current frame: " + std::to_string(frame) + " money: " + std::to_string(money) + 
+            "goods_num: " + std::to_string(goods_num));
         }
 
         std::string ok;
